@@ -76,7 +76,7 @@ export function webWorkerPlugin(config: ResolvedConfig): Plugin {
         if (query.inline != null) {
           // inline as blob data url
           return `const encodedJs = "${content.toString('base64')}";
-            const blob = typeof window !== "undefined" && window.Blob && new Blob([atob(encodedJs)], { type: "text/javascript;charset=utf-8" });
+            export const blob = typeof window !== "undefined" && window.Blob && new Blob([atob(encodedJs)], { type: "text/javascript;charset=utf-8" });
             export default function WorkerWrapper() {
               const objURL = blob && (window.URL || window.webkitURL).createObjectURL(blob);
               try {
@@ -105,13 +105,14 @@ export function webWorkerPlugin(config: ResolvedConfig): Plugin {
 
       const workerConstructor =
         query.sharedworker != null ? 'SharedWorker' : 'Worker'
-      const workerOptions = { type: 'module' }
-
-      return `export default function WorkerWrapper() {
-        return new ${workerConstructor}(${JSON.stringify(
-        url
-      )}, ${JSON.stringify(workerOptions, null, 2)})
-      }`
+      const workerOptions = JSON.stringify({ type: 'module' }, null, 2)
+      const workerUrl = JSON.stringify(url)
+      return `
+        export const url = ${workerUrl}
+        export default function WorkerWrapper() {
+          return new ${workerConstructor}(${workerUrl}, ${workerOptions})
+        }
+      `
     }
   }
 }
